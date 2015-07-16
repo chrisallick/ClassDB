@@ -128,6 +128,7 @@ post '/chat/new/' do
             "email" => params[:email],
             "msg" => params[:msg],
             "inits" => params[:inits],
+            "time" => $redis.time[0],
             "cid" => cid
         }
         $redis.set( "chaaaat_chat:#{cid}", new_chat.to_json )
