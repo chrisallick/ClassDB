@@ -56,6 +56,14 @@ get '/chat/new/' do
     end
 end
 
+get '/chat/clear/' do
+    content_type :json
+
+    $redis.del("classchat_chats")
+
+    { :result => "success", :code => "200" }.to_json
+end
+
 # request new chats
 get '/chat/history/' do
     content_type :json
