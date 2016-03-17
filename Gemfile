@@ -6,3 +6,5 @@ gem "sinatra-partial"
 gem "redis"
 gem "json"
 gem "thin"
+
+gem 'sinatra-jsonp'
