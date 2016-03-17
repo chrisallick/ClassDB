@@ -41,6 +41,7 @@ get '/chat/new/' do
         
         new_chat = {
             "username" => params[:username],
+            "special" => params[:special],
             "text" => params[:text],
             "time" => $redis.time[0],
             "cid" => cid
