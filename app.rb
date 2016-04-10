@@ -50,7 +50,8 @@ get '/chat/new/' do
         $redis.set( "classchat_chat:#{cid}", new_chat.to_json )
         $redis.lpush( "classchat_chats", cid )
 
-        $redis.ltrim( "classchat_chats", 0, 100 )
+        # chat length
+        $redis.ltrim( "classchat_chats", 0, 200 )
         
         data = { :result => "success", :code => "200", :newchat => new_chat }
         JSONP data
