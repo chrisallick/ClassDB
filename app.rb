@@ -8,18 +8,12 @@ configure do
     redisUri = ENV["REDISTOGO_URL"] || 'redis://localhost:6379'
     uri = URI.parse(redisUri) 
     $redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
-
-    if $redis.get("classchat_count")
-        $redis.set("classchat_count", $redis.get("classchat_count") )
-    else
-        $redis.set("classchat_count", 0 )
-    end
 end
 
 get '/' do
     content_type :json
 
-    { :result => "success", :msg => "hello from classchat v1.0" }.to_json
+    { :result => "success", :msg => "hello from ClassDB v1.0" }.to_json
 end
 
 not_found do
@@ -32,56 +26,38 @@ end
 # code 302 = error, read reason
 
 # add new chat message
-get '/chat/new/' do
+get '/db/set/' do
     content_type :json
 
-    if params[:username] && params[:text]
-        $redis.incr( "classchat_count" )
-        cid = $redis.get("classchat_count")
-        
-        new_chat = {
-            "username" => params[:username],
-            "special" => params[:special],
-            "text" => params[:text],
-            "time" => $redis.time[0],
-            "cid" => cid
-        }
-
-        $redis.set( "classchat_chat:#{cid}", new_chat.to_json )
-        $redis.lpush( "classchat_chats", cid )
-
-        # chat length
-        $redis.ltrim( "classchat_chats", 0, 200 )
-        
-        data = { :result => "success", :code => "200", :newchat => new_chat }
-        JSONP data
+    if params[:key] && params[:value]
+        if $redis.get( params[:key] )
+            data = { :result => "error", :code => "200", :msg => "that key already exists" }
+            JSONP data
+        else
+            $redis.set( params[:key], params[:value] )
+            
+            data = { :result => "success", :code => "200", :key => "#{params[:key]}", :value => "#{params[:value]}" }
+            JSONP data
+        end
     else
         { :result => "error", :code => "300", :msg => "*shrug*" }.to_json
     end
 end
 
-get '/chat/clear/' do
-    content_type :json
-
-    $redis.del("classchat_chats")
-
-    { :result => "success", :code => "200" }.to_json
-end
-
 # request new chats
-get '/chat/history/' do
+get '/db/get/' do
     content_type :json
 
-    chats = []
-    all = $redis.lrange("classchat_chats", 0, $redis.llen( "classchat_chats" ) )
-    all.each do |cid|
-        chat_object = JSON.parse($redis.get("classchat_chat:#{cid}"))
-
-        chats.push( chat_object )
+    if params[:key]
+        if $redis.get( params[:key] )
+            value = $redis.get( params[:key] )
+            data = { :result => "success", :code => "200", :value => value }
+            JSONP data
+        else
+            data = { :result => "error", :code => "200", :msg => "that key doesn't exist" }
+            JSONP data
+        end
+    else
+        { :result => "error", :code => "300", :msg => "*shrug*" }.to_json
     end
-
-    chats.reverse!
-
-    data = { :result => "success", :code => "200", :chats => chats }
-    JSONP data
 end
